@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-active: #4338ca;
+      --secondary: #8b5cf6;
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --success: #10b981;
+      --danger: #ef4444;
+      --surface: #ffffff;
+      --surface-elevated: #f8fafc;
+      --surface-overlay: rgba(255,255,255,0.85);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --transition-fast: 120ms ease;
+      --transition-base: 200ms ease;
+      --focus-ring: 0 0 0 3px rgba(99,102,241,0.35);
+    }
+
+    [data-theme="dark"] {
+      --primary: #818cf8;
+      --primary-hover: #6366f1;
+      --primary-active: #4f46e5;
+      --secondary: #a78bfa;
+      --accent: #fbbf24;
+      --accent-hover: #f59e0b;
+      --success: #34d399;
+      --danger: #f87171;
+      --surface: #0f172a;
+      --surface-elevated: #1e293b;
+      --surface-overlay: rgba(15,23,42,0.85);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --border: #334155;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.45);
+      --focus-ring: 0 0 0 3px rgba(129,140,248,0.35);
+    }
+
+    /* Instant theme switch - no animation */
+    *, *::before, *::after {
+      transition: none !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--surface-elevated);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    /* Skip link */
+    .skip-link {
+      position: absolute; top: -40px; left: 0;
+      background: var(--primary); color: white; padding: 8px 16px;
+      z-index: 1000;
+      font-size: 0.875rem; font-weight: 600; text-decoration: none;
+      border-radius: 0 0 var(--radius-sm) 0;
+    }
+    .skip-link:focus { top: 0; }
+
+    .calculator-container {
+      position: relative;
+      max-width: 420px;
+      width: 100%;
+    }
+
+    .calc-wrapper {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+
+    .calc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .calc-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .icon-btn {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+
+    .icon-btn:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .calc-display {
+      background: var(--surface-elevated);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-end;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .calc-display:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .calc-display .expression {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      min-height: 1.25rem;
+      word-break: break-all;
+      text-align: right;
+      width: 100%;
+    }
+
+    .calc-display .result {
+      font-size: 2.5rem;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      word-break: break-all;
+      text-align: right;
+      width: 100%;
+      line-height: 1.2;
+    }
+
+    .calc-display.error .result {
+      color: var(--danger);
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+
+    .btn {
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 56px;
+      font-family: inherit;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:active {
+      background: var(--primary-active);
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: var(--surface-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-accent:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      opacity: 0.9;
+    }
+
+    .btn-lg {
+      font-size: 1.5rem;
+      padding: 1.25rem;
+    }
+
+    .btn-span-2 {
+      grid-column: span 2;
+    }
+
+    .history-panel {
+      position: fixed;
+      right: -340px;
+      top: 0;
+      width: 340px;
+      height: 100vh;
+      background: var(--surface-overlay);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-left: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-panel.open {
+      right: 0;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .history-clear {
+      font-size: 0.875rem;
+      color: var(--danger);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .history-clear:hover {
+      text-decoration: underline;
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: 0.75rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .history-item:hover {
+      border-color: var(--primary);
+    }
+
+    .history-item .expr {
+      color: var(--text-secondary);
+      font-family: monospace;
+      margin-bottom: 0.25rem;
+    }
+
+    .history-item .result {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem;
+      font-size: 0.875rem;
+    }
+
+    .history-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 99;
+      display: none;
+    }
+
+    .history-backdrop.show {
+      display: block;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text-primary);
+      color: var(--surface);
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    .no-js {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    /* Mobile */
+    @media (max-width: 480px) {
+      body { padding: 0; }
+      .calculator-container { max-width: 100%; }
+      .calc-wrapper { border-radius: 0; border: none; box-shadow: none; padding: 1rem; }
+      .btn-grid { gap: 0.5rem; }
+      .btn { padding: 0.875rem; font-size: 1.125rem; min-height: 48px; }
+      .calc-display .result { font-size: 2rem; }
+      .history-panel { width: 100%; right: -100%; top: auto; bottom: -70vh; height: 70vh; border-left: none; border-top: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+      .history-panel.open { right: 0; bottom: 0; }
+    }
+
+    /* Tablet */
+    @media (min-width: 481px) and (max-width: 768px) {
+      .calculator-container { max-width: 480px; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#calculator" class="skip-link">Skip to calculator</a>
+
+  <noscript>
+    <div class="no-js">
+      <h2>This calculator requires JavaScript</h2>
+      <p>Please enable JavaScript in your browser to use the calculator.</p>
+    </div>
+  </noscript>
+
+  <div class="calculator-container" id="calculator" style="display:none;">
+    <div class="calc-wrapper">
+      <div class="calc-header">
+        <span class="calc-title">Calculator</span>
+        <div class="header-buttons">
+          <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">🌙</button>
+          <button class="icon-btn" id="historyToggle" aria-label="Toggle history panel" title="History">📋</button>
+        </div>
+      </div>
+
+      <div class="calc-display" id="calcDisplay" tabindex="0" aria-live="polite" aria-atomic="true" title="Click to copy result">
+        <div class="expression" id="expression"></div>
+        <div class="result" id="result">0</div>
+      </div>
+
+      <div class="btn-grid" role="group" aria-label="Calculator buttons">
+        <button class="btn btn-secondary" data-action="clear" aria-label="All clear">AC</button>
+        <button class="btn btn-secondary" data-action="clear-entry" aria-label="Clear entry">CE</button>
+        <button class="btn btn-secondary" data-action="backspace" aria-label="Backspace">⌫</button>
+        <button class="btn btn-accent" data-action="operator" data-value="/" aria-label="Divide">÷</button>
+
+        <button class="btn btn-secondary" data-action="number" data-value="7" aria-label="7">7</button>
+        <button class="btn btn-secondary" data-action="number" data-value="8" aria-label="8">8</button>
+        <button class="btn btn-secondary" data-action="number" data-value="9" aria-label="9">9</button>
+        <button class="btn btn-accent" data-action="operator" data-value="*" aria-label="Multiply">×</button>
+
+        <button class="btn btn-secondary" data-action="number" data-value="4" aria-label="4">4</button>
+        <button class="btn btn-secondary" data-action="number" data-value="5" aria-label="5">5</button>
+        <button class="btn btn-secondary" data-action="number" data-value="6" aria-label="6">6</button>
+        <button class="btn btn-accent" data-action="operator" data-value="-" aria-label="Subtract">−</button>
+
+        <button class="btn btn-secondary" data-action="number" data-value="1" aria-label="1">1</button>
+        <button class="btn btn-secondary" data-action="number" data-value="2" aria-label="2">2</button>
+        <button class="btn btn-secondary" data-action="number" data-value="3" aria-label="3">3</button>
+        <button class="btn btn-accent" data-action="operator" data-value="+" aria-label="Add">+</button>
+
+        <button class="btn btn-secondary" data-action="number" data-value="0" aria-label="0">0</button>
+        <button class="btn btn-secondary" data-action="decimal" aria-label="Decimal point">.</button>
+        <button class="btn btn-secondary" data-action="sign" aria-label="Toggle sign">±</button>
+        <button class="btn btn-primary btn-lg" data-action="equals" aria-label="Equals">=</button>
+      </div>
+
+      <div class="btn-grid" style="margin-top: 0.75rem;">
+        <button class="btn btn-secondary" data-action="percent" aria-label="Percent">%</button>
+        <button class="btn btn-secondary" data-action="sqrt" aria-label="Square root">√</button>
+        <button class="btn btn-secondary" data-action="power" aria-label="Exponent">xʸ</button>
+        <button class="btn btn-secondary" data-action="parenthesis" data-value="(" aria-label="Open parenthesis">(</button>
+        <button class="btn btn-secondary" data-action="parenthesis" data-value=")" aria-label="Close parenthesis">)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="history-backdrop" id="historyBackdrop"></div>
+  <div class="history-panel" id="historyPanel" aria-hidden="true">
+    <div class="history-header">
+      <span class="history-title">History</span>
+      <button class="history-clear" id="historyClear">Clear</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="history-empty">No calculations yet</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="calculator.js"></script>
+  <script>
+    document.getElementById('calculator').style.display = '';
+  </script>
+</body>
+</html>
